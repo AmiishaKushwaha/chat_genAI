@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Agent Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(115deg, #1e3c72 0%, #2a5298 50%, #e9e4f0 100%);
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Roboto', 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(255,255,255,0.95);
+      box-shadow: 0 8px 40px 0 rgba(34, 76, 160, 0.19), 0 1.5px 8px rgba(44,76,210,0.09);
+      border-radius: 22px;
+      padding: 32px 18px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      min-height: 650px;
+      position: relative;
+      backdrop-filter: blur(3px);
+      border: 1.5px solid #f5f6fa;
+    }
+    .chat-header {
+      font-size: 1.55rem;
+      font-weight: bold;
+      color: #21498a;
+      margin-bottom: 14px;
+      letter-spacing: 1.5px;
+      text-align: center;
+      position: relative;
+    }
+    .chat-header::before {
+      content: '';
+      display: inline-block;
+      background: linear-gradient(90deg,#4776e6,#8e54e9);
+      height: 3px;
+      width: 44px;
+      border-radius: 2px;
+      position: absolute;
+      left: 50%;
+      top: 44px;
+      transform: translateX(-50%);
+    }
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 14px;
+      padding-right: 6px;
+      max-height: 440px;
+      transition: background 0.2s;
+      background: linear-gradient(120deg, #fff 90%, #e7f0fa 100%);
+      border-radius: 16px;
+      border: 1px solid #edf0f6;
+    }
+    .message {
+      margin: 14px 0 10px 0;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .message.user {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #c8e6ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.65rem;
+      box-shadow: 0 1px 8px #a9bbf933;
+    }
+    .avatar.bot {
+      background: #ffd9e2;
+      color: #cb2d6f;
+    }
+    .avatar.user {
+      background: #d0f3fd;
+      color: #1788ad;
+    }
+    .bubble {
+      display: inline-block;
+      padding: 11px 18px 12px 18px;
+      border-radius: 18px;
+      max-width: 77%;
+      font-size: 1.02rem;
+      line-height: 1.6;
+      box-shadow: 0 2px 8px #d2defc44;
+      position: relative;
+      word-break: break-word;
+    }
+    .user .bubble {
+      background: linear-gradient(100deg,#d8f0fa 40%,#b7e4fa 100%);
+      color: #1453a6;
+      border-bottom-right-radius: 6px;
+    }
+    .bot .bubble {
+      background: linear-gradient(100deg,#ffecf1 40%,#f7c7d3 100%);
+      color: #6c264d;
+      border-bottom-left-radius: 6px;
+    }
+    .timestamp {
+      font-size: 0.81rem;
+      color: #97a2b6;
+      margin: 0 5px 0 5px;
+      align-self: flex-end;
+    }
+    .input-row {
+      display: flex;
+      gap: 9px;
+      margin-top: 4px;
+    }
+    .chat-input {
+      flex: 1;
+      border-radius: 9px;
+      border: 1.5px solid #b3b3b3;
+      font-size: 1.07rem;
+      padding: 11px 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fcfcfc;
+      font-weight: 500;
+    }
+    .chat-input:focus {
+      border-color: #4776e6;
+    }
+    .send-btn {
+      background: linear-gradient(100deg,#4776e6 30%, #8e54e9 100%);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 11px 20px;
+      font-size: 1.07rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #bbcaf733;
+      transition: background 0.18s;
+      outline: none;
+    }
+    .send-btn:active {
+      background: #3854a3;
+    }
+    .loading {
+      color: #4776e6;
+      font-size: 1rem;
+      margin: 10px 0 0 8px;
+      font-style: italic;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.5; } }
+    .clear-btn {
+      position: absolute;
+      top: 23px;
+      right: 22px;
+      background: transparent;
+      border: none;
+      color: #a5a6b4;
+      font-size: 1.15rem;
+      cursor: pointer;
+      transition: color 0.18s;
+      z-index: 2;
+    }
+    .clear-btn:hover { color: #e93b81; }
+    /* Scrollbar styling */
+    .chat-box::-webkit-scrollbar { width: 6px; }
+    .chat-box::-webkit-scrollbar-thumb { background: #d0e4ff; border-radius: 4px; }
+    .chat-box::-webkit-scrollbar-track { background: #f9fcff; }
+    /* Responsive */
+    @media (max-width: 500px) {
+      .chat-container { padding: 13px 2.5vw 12px 2.5vw; min-height: 90vh; }
+      .chat-header { font-size: 1.16rem; }
+      .avatar { width: 32px; height: 32px; font-size: 1.17rem; }
+      .bubble { font-size: 0.97rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <span>🤖 AI Agent Chat</span>
+      <button class="clear-btn" title="Clear chat" onclick="clearChat()">
+        🗑️
+      </button>
+    </div>
+    <div class="chat-box" id="chatBox"></div>
+    <form class="input-row" id="chatForm" autocomplete="off">
+      <input id="userInput" class="chat-input" placeholder="Ask me anything..." autofocus autocomplete="off" />
+      <button class="send-btn" type="submit">Send</button>
+    </form>
+    <div id="loading" class="loading" style="display:none;">AI is typing...</div>
+  </div>
+  <script>
+    const chatBox = document.getElementById('chatBox');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+    const loading = document.getElementById('loading');
+    const chatKey = 'ai_agent_chat_history_v1';
+
+    // === Avatar emojis
+    const AVATARS = {
+      user: '👨‍💻',
+      bot: '🤖'
+    };
+
+    // --- Helper to format time as HH:mm
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // --- Add a message to chat (with animation for bot)
+    function addMessage({ text, sender, timestamp }, animateBot = false) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message ' + sender;
+
+      const avatar = document.createElement('span');
+      avatar.className = 'avatar ' + sender;
+      avatar.innerText = AVATARS[sender] || '👤';
+
+      const contentWrap = document.createElement('div');
+      contentWrap.style.display = 'flex';
+      contentWrap.style.flexDirection = 'column';
+
+      const bubble = document.createElement('span');
+      bubble.className = 'bubble';
+
+      const ts = document.createElement('span');
+      ts.className = 'timestamp';
+      ts.innerText = formatTime(new Date(timestamp));
+
+      contentWrap.appendChild(bubble);
+      contentWrap.appendChild(ts);
+
+      if (sender === 'user') {
+        msgDiv.appendChild(avatar);
+        msgDiv.appendChild(contentWrap);
+      } else {
+        msgDiv.appendChild(avatar);
+        msgDiv.appendChild(contentWrap);
+      }
+
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Animate bot typing
+      if (sender === 'bot' && animateBot) {
+        bubble.innerText = '';
+        let i = 0;
+        const speed = Math.max(11, Math.min(33, Math.floor(110 / text.length))); // adaptive speed
+        function typeWriter() {
+          bubble.innerText = text.slice(0, i);
+          if (i++ < text.length) {
+            setTimeout(typeWriter, speed);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          } else {
+            bubble.innerText = text; // just in case
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+        }
+        typeWriter();
+      } else {
+        bubble.innerText = text;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    // --- Persist chat
+    function saveChat(messages) {
+      localStorage.setItem(chatKey, JSON.stringify(messages));
+    }
+    function loadChat() {
+      return JSON.parse(localStorage.getItem(chatKey) || '[]');
+    }
+    function clearChat() {
+      if (confirm("Clear all chat messages?")) {
+        localStorage.removeItem(chatKey);
+        renderChat();
+      }
+    }
+
+    // --- Render chat from localStorage
+    function renderChat() {
+      chatBox.innerHTML = '';
+      const history = loadChat();
+      for (const msg of history) {
+        addMessage(msg, false);
+      }
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // --- Main form handler
+    chatForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+      const timestamp = Date.now();
+
+      // Add user message
+      const userMsg = { text, sender: 'user', timestamp };
+      addMessage(userMsg, false);
+
+      // Save to history
+      const chatHistory = loadChat();
+      chatHistory.push(userMsg);
+      saveChat(chatHistory);
+
+      userInput.value = '';
+      loading.style.display = 'block';
+
+      // Fetch bot reply
+      try {
+        const res = await fetch('http://localhost:5000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: text })
+        });
+        const data = await res.json();
+        const botReply = data.response || "Sorry, I didn't get that.";
+        const botMsg = { text: botReply, sender: 'bot', timestamp: Date.now() };
+
+        // Add bot message with animation
+        addMessage(botMsg, true);
+
+        // Save to history
+        const chatHistory = loadChat();
+        chatHistory.push(botMsg);
+        saveChat(chatHistory);
+      } catch {
+        const errorMsg = { text: 'Error contacting the AI agent.', sender: 'bot', timestamp: Date.now() };
+        addMessage(errorMsg, true);
+
+        const chatHistory = loadChat();
+        chatHistory.push(errorMsg);
+        saveChat(chatHistory);
+      }
+      loading.style.display = 'none';
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    // --- On load, restore chat
+    window.onload = () => {
+      renderChat();
+    };
+  </script>
+</body>
+</html>
