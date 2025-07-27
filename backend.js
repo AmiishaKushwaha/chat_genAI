@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import { GoogleGenAI } from "@google/genai";
-
+import 'dotenv/config'
 // In-memory conversation history
 const History = [];
-const ai = new GoogleGenAI({ apiKey: "AIzaSyBLyeBoeEbZcJmFLji1ztNJ9Fr1X7vaDPo" });
+const ai = new GoogleGenAI({ apiKey: process.env.GENIAPI });
 
 // Tool functions
 function sum({ num1, num2 }) {
